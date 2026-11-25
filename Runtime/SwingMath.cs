@@ -95,11 +95,34 @@ namespace Cleave
             }
 
             Quaternion sweep = Sweep(style, s, arc, mirrored);
-            // Out in front along the sweep, blade (the prefab's +Y) pointing the way the swing points.
+            // Out in front along the sweep, blade (the prefab's +Y) pointing the way the swing points...
             Vector3 position = sweep * new Vector3(0f, -0.12f, 0.6f);
-            float roll = style == SwingStyle.Slash ? (mirrored ? 70f : -70f) : 0f;
-            return new WeaponPose(position, sweep * Quaternion.Euler(80f, 0f, 0f) * Quaternion.Euler(0f, roll, 0f));
+            Vector3 blade = sweep * Quaternion.Euler(80f, 0f, 0f) * Vector3.up;
+            // ...with its edge (the prefab's +X) leading the way it moves.
+            return new WeaponPose(position, EdgeLeading(blade, sweep * Motion(style, mirrored)));
         }
+
+        /// <summary>Which way (before the sweep's turn) a swing moves: right to left, left to right, or down.</summary>
+        static Vector3 Motion(SwingStyle style, bool mirrored) =>
+            style == SwingStyle.Overhead ? Vector3.down : mirrored ? Vector3.right : Vector3.left;
+
+        /// <summary>A turn that points a weapon's +Y along <paramref name="blade"/> and its edge (+X) as near
+        /// <paramref name="motion"/> as it can be.</summary>
+        public static Quaternion EdgeLeading(Vector3 blade, Vector3 motion)
+        {
+            blade.Normalize();
+            Vector3 edge = Vector3.ProjectOnPlane(motion, blade);
+            if (edge.sqrMagnitude < 1e-8f) edge = Vector3.ProjectOnPlane(Vector3.right, blade);
+            Vector3 flat = Vector3.Cross(edge.normalized, blade); // +Z, the way the flat faces
+            return Quaternion.LookRotation(flat, blade);
+        }
+
+        /// <summary>
+        /// How much of a swing's damage lands on something hit <paramref name="degrees"/> off the centre of the view:
+        /// all of it dead centre, halving every <paramref name="halfDamageAngle"/> degrees further out. 0 = no falloff.
+        /// </summary>
+        public static float CentreFalloff(float degrees, float halfDamageAngle) =>
+            halfDamageAngle <= 0f ? 1f : Mathf.Pow(0.5f, Mathf.Max(0f, degrees) / halfDamageAngle);
 
         /// <summary>
         /// Where the weapon is drawn back while winding up to <paramref name="charge"/>: cocked to the side it will
@@ -115,16 +138,18 @@ namespace Cleave
                 {
                     float side = mirrored ? -1f : 1f;
                     var position = new Vector3(side * Mathf.Lerp(0.24f, 0.3f, charge), Mathf.Lerp(-0.22f, -0.18f, charge), Mathf.Lerp(0.55f, 0.5f, charge));
-                    // Blade up, leaning back and out toward the side it swings from.
+                    // Blade up, leaning back and out toward the side it swings from, edge toward the slash.
                     var rotation = Quaternion.Euler(Mathf.Lerp(-15f, -30f, charge), 0f, -side * Mathf.Lerp(40f, 60f, charge));
-                    return new WeaponPose(position, rotation);
+                    Vector3 blade = rotation * Vector3.up;
+                    return new WeaponPose(position, EdgeLeading(blade, new Vector3(-side, 0f, 0f)));
                 }
                 case SwingStyle.Overhead:
                 {
                     var position = new Vector3(Mathf.Lerp(0.14f, 0.08f, charge), Mathf.Lerp(-0.24f, -0.2f, charge), Mathf.Lerp(0.55f, 0.5f, charge));
-                    // Raised high, tipping back over the head.
+                    // Raised high, tipping back over the head, edge toward the chop (forward).
                     var rotation = Quaternion.Euler(Mathf.Lerp(-10f, -30f, charge), 0f, Mathf.Lerp(-12f, -6f, charge));
-                    return new WeaponPose(position, rotation);
+                    Vector3 blade = rotation * Vector3.up;
+                    return new WeaponPose(position, EdgeLeading(blade, Vector3.forward));
                 }
                 default:
                     return new WeaponPose(new Vector3(0.14f, -0.19f, Mathf.Lerp(0.45f, 0.38f, charge)), Quaternion.Euler(88f, 0f, 0f));

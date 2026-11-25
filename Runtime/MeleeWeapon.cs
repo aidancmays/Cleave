@@ -36,7 +36,9 @@ namespace Cleave
         [Tooltip("How thick the swing is (sphere cast radius), so it doesn't have to be pixel perfect.")]
         [Min(0f)] [SerializeField] float hitRadius = 0.15f;
         [Tooltip("Most things one swing can hit. Walls stop it either way.")]
-        [Min(1)] [SerializeField] int maxTargets = 1;
+        [Min(1)] [SerializeField] int maxTargets = 4;
+        [Tooltip("Damage halves for every this many degrees a target is off the centre of the view, so what you aim at takes most of it. 0 = no falloff.")]
+        [Min(0f)] [SerializeField] float halfDamageAngle = 15f;
         [Tooltip("Impulse (N s) given to what a quick attack hits, along the swing.")]
         [Min(0f)] [SerializeField] float knockback = 2f;
         [Tooltip("Impulse at full charge.")]
@@ -74,8 +76,10 @@ namespace Cleave
         [Header("Holding")]
         [Tooltip("Where the weapon floats while idle, from the eyes (x right, y up, z forward).")]
         [SerializeField] Vector3 holdOffset = new Vector3(0.3f, -0.3f, 0.55f);
-        [Tooltip("How it is turned while idle. Weapon prefabs point along their +Y.")]
+        [Tooltip("How it is turned while idle. Weapon prefabs point along their +Y, edges along X.")]
         [SerializeField] Vector3 holdEuler = new Vector3(35f, 0f, -12f);
+        [Tooltip("Degrees it is then turned about its own length while idle. 90 = edge toward you.")]
+        [SerializeField] float holdTwist = 90f;
         [Tooltip("Walk speed multiplier while winding up a charge.")]
         [Range(0.1f, 1f)] [SerializeField] float chargingSpeed = 0.6f;
 
@@ -84,6 +88,7 @@ namespace Cleave
         public float Reach => reach;
         public float HitRadius => hitRadius;
         public int MaxTargets => maxTargets;
+        public float HalfDamageAngle => halfDamageAngle;
         public float Knockback => knockback;
         public float ChargedKnockback => chargedKnockback;
         public float TapTime => tapTime;
@@ -112,7 +117,7 @@ namespace Cleave
         public float StaminaCost => staminaCost;
         public float ChargedStaminaCost => chargedStaminaCost;
         public Vector3 HoldOffset => holdOffset;
-        public Quaternion HoldRotation => Quaternion.Euler(holdEuler);
+        public Quaternion HoldRotation => Quaternion.Euler(holdEuler) * Quaternion.AngleAxis(holdTwist, Vector3.up);
         public float ChargingSpeed => chargingSpeed;
 
         /// <summary>The numbers for a swing let go after holding for <paramref name="held"/> seconds.</summary>

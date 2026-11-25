@@ -376,7 +376,9 @@ namespace Cleave
                 if (struck.Contains(target)) return;
                 struck.Add(target);
                 Contact?.Invoke(collider, point, true);
-                Report(target, network, point, KnockDirection(s, direction));
+                // What is aimed at takes most of it; things caught off to the side take less.
+                float share = SwingMath.CentreFalloff(Vector3.Angle(eyes.forward, direction), weapon.HalfDamageAngle);
+                Report(target, network, point, KnockDirection(s, direction), share);
                 if (++landed >= weapon.MaxTargets) sweepDone = true;
                 return;
             }
@@ -403,12 +405,13 @@ namespace Cleave
             return motion.sqrMagnitude < 1e-8f ? direction : (direction + motion.normalized).normalized;
         }
 
-        void Report(Component target, NetworkObject network, Vector3 point, Vector3 direction)
+        void Report(Component target, NetworkObject network, Vector3 point, Vector3 direction, float share)
         {
+            float damage = spec.Damage * share;
             if (network != null)
-                HitRpc(network, point, direction, spec.Damage, spec.Knockback, spec.Charged, spec.Charge);
+                HitRpc(network, point, direction, damage, spec.Knockback, spec.Charged, spec.Charge);
             else if (IsServer && target is Hittable local)
-                local.ServerStrike(MakeHit(point, direction, spec.Damage, spec.Knockback, spec.Charged, spec.Charge));
+                local.ServerStrike(MakeHit(point, direction, damage, spec.Knockback, spec.Charged, spec.Charge));
         }
 
         MeleeHit MakeHit(Vector3 point, Vector3 direction, float damage, float knockback, bool charged, float charge) => new MeleeHit

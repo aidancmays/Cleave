@@ -53,6 +53,43 @@ namespace Cleave.Tests
         }
 
         [Test]
+        public void CentreFalloffHalvesEveryHalfAngle()
+        {
+            Assert.AreEqual(1f, SwingMath.CentreFalloff(0f, 15f), 1e-5f);
+            Assert.AreEqual(0.5f, SwingMath.CentreFalloff(15f, 15f), 1e-5f);
+            Assert.AreEqual(0.25f, SwingMath.CentreFalloff(30f, 15f), 1e-5f);
+            Assert.AreEqual(1f, SwingMath.CentreFalloff(50f, 0f), 1e-5f, "0 = no falloff");
+        }
+
+        [Test]
+        public void EdgeLeadsTheSwing([Values(SwingStyle.Slash, SwingStyle.Overhead)] SwingStyle style, [Values] bool mirrored, [Values(0.1f, 0.5f, 0.9f)] float s)
+        {
+            const float arc = 110f;
+            Quaternion turn = SwingMath.Swing(style, s, arc, mirrored).Rotation;
+            Vector3 motion = SwingMath.Direction(style, s + 0.01f, arc, mirrored) - SwingMath.Direction(style, s - 0.01f, arc, mirrored);
+            Vector3 edge = turn * Vector3.right;
+            Vector3 flat = turn * Vector3.forward;
+            Assert.Greater(Mathf.Abs(Vector3.Dot(edge, motion.normalized)), 0.9f, "the edge faces the way it moves");
+            Assert.Less(Mathf.Abs(Vector3.Dot(flat, motion.normalized)), 0.3f, "not the flat");
+        }
+
+        [Test]
+        public void IdleShowsTheEdge()
+        {
+            var weapon = ScriptableObject.CreateInstance<MeleeWeapon>();
+            try
+            {
+                // The edge (+X) faces back toward the eyes more than the flat (+Z) does.
+                Quaternion turn = SwingMath.Idle(weapon).Rotation;
+                Assert.Greater(Mathf.Abs((turn * Vector3.right).z), Mathf.Abs((turn * Vector3.forward).z));
+            }
+            finally
+            {
+                Object.DestroyImmediate(weapon);
+            }
+        }
+
+        [Test]
         public void SwingProgressRunsFromStartToOne()
         {
             Assert.AreEqual(-0.3f, SwingMath.SwingProgress(-0.3f, 0f), 1e-5f);

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0
+
+- The weapon's edge (its X axis) now leads every slash and overhead swing and wind-up; while idle it is turned
+  Hold Twist (default 90) degrees about its length so the edge faces the player.
+- Damage falls off with how far off the centre of the view a target is hit: it halves every Half Damage Angle
+  (default 15) degrees, so swings can catch several things but the one aimed at takes most of it. Max Targets
+  default raised to 4. Knockback is not reduced.
+
 ## 0.2.1
 
 - Winding up and charging now has its own pose that stays in view (cocked to the side for a slash, raised for an
