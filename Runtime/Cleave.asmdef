@@ -1,0 +1,17 @@
+{
+    "name": "Cleave",
+    "rootNamespace": "Cleave",
+    "references": [
+        "Unity.Netcode.Runtime",
+        "GameplayTags"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
