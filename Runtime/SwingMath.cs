@@ -101,6 +101,36 @@ namespace Cleave
             return new WeaponPose(position, sweep * Quaternion.Euler(80f, 0f, 0f) * Quaternion.Euler(0f, roll, 0f));
         }
 
+        /// <summary>
+        /// Where the weapon is drawn back while winding up to <paramref name="charge"/>: cocked to the side it will
+        /// swing from (raised for an overhead, pulled in for a thrust), but kept in view so the charge can be seen.
+        /// The swing itself then sweeps out from its start, which can be well off screen.
+        /// </summary>
+        public static WeaponPose WindUp(SwingStyle style, float charge, bool mirrored)
+        {
+            charge = Mathf.Clamp01(charge);
+            switch (style)
+            {
+                case SwingStyle.Slash:
+                {
+                    float side = mirrored ? -1f : 1f;
+                    var position = new Vector3(side * Mathf.Lerp(0.24f, 0.3f, charge), Mathf.Lerp(-0.22f, -0.18f, charge), Mathf.Lerp(0.55f, 0.5f, charge));
+                    // Blade up, leaning back and out toward the side it swings from.
+                    var rotation = Quaternion.Euler(Mathf.Lerp(-15f, -30f, charge), 0f, -side * Mathf.Lerp(40f, 60f, charge));
+                    return new WeaponPose(position, rotation);
+                }
+                case SwingStyle.Overhead:
+                {
+                    var position = new Vector3(Mathf.Lerp(0.14f, 0.08f, charge), Mathf.Lerp(-0.24f, -0.2f, charge), Mathf.Lerp(0.55f, 0.5f, charge));
+                    // Raised high, tipping back over the head.
+                    var rotation = Quaternion.Euler(Mathf.Lerp(-10f, -30f, charge), 0f, Mathf.Lerp(-12f, -6f, charge));
+                    return new WeaponPose(position, rotation);
+                }
+                default:
+                    return new WeaponPose(new Vector3(0.14f, -0.19f, Mathf.Lerp(0.45f, 0.38f, charge)), Quaternion.Euler(88f, 0f, 0f));
+            }
+        }
+
         /// <summary>Smooth 0..1 blend.</summary>
         public static float Smooth(float t)
         {

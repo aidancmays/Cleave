@@ -43,6 +43,16 @@ namespace Cleave.Tests
         }
 
         [Test]
+        public void WindUpStaysInView([Values] SwingStyle style, [Values(0f, 0.5f, 1f)] float charge, [Values] bool mirrored)
+        {
+            // The grip, as seen from the eyes, within a 60 degree tall 16:9 view (with some margin).
+            Vector3 grip = SwingMath.WindUp(style, charge, mirrored).Position;
+            Assert.Greater(grip.z, 0.3f, "in front of the near plane");
+            Assert.Less(Mathf.Abs(grip.y) / grip.z, Mathf.Tan(30f * Mathf.Deg2Rad) * 0.9f);
+            Assert.Less(Mathf.Abs(grip.x) / grip.z, Mathf.Tan(30f * Mathf.Deg2Rad) * 16f / 9f * 0.9f);
+        }
+
+        [Test]
         public void SwingProgressRunsFromStartToOne()
         {
             Assert.AreEqual(-0.3f, SwingMath.SwingProgress(-0.3f, 0f), 1e-5f);

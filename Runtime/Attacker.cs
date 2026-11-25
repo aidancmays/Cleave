@@ -501,7 +501,7 @@ namespace Cleave
                     float charge = SwingMath.Charge(held, weapon.TapTime, weapon.ChargeTime);
                     SwingStyle style = charging ? weapon.ChargedStyle : weapon.QuickStyle;
                     bool flip = IsOwner && style == SwingStyle.Slash && !charging && nextMirrored;
-                    WeaponPose back = SwingMath.Swing(style, SwingMath.WindUpProgress(charge), weapon.Arc, flip);
+                    WeaponPose back = SwingMath.WindUp(style, charge, flip);
                     WeaponPose pose = charging ? back : WeaponPose.Lerp(idle, back, SwingMath.Smooth(held / weapon.TapTime));
                     float shake = weapon.ShakeFor(held);
                     if (shake > 0f) Shake(ref pose, shake);

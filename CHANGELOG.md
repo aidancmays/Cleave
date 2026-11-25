@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1
+
+- Winding up and charging now has its own pose that stays in view (cocked to the side for a slash, raised for an
+  overhead, pulled in for a thrust) instead of starting the swing's path, which went off screen. Swings are unchanged.
+
 ## 0.2.0
 
 - Overcharge: holding on past full charge adds up to Overcharge Damage Bonus (default +20%) more damage, reached
