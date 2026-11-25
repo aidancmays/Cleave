@@ -21,7 +21,8 @@ namespace Cleave
     ///
     /// Pressing and letting go within Tap Time is a quick attack. Holding longer winds up a charged attack: the charge
     /// fills over Charge Time, and letting go swings with damage, knockback and stamina cost between the quick
-    /// attack's and the full charge's.
+    /// attack's and the full charge's. Holding on past full charge adds a little more damage (Overcharge Damage Bonus)
+    /// while the weapon shakes harder and harder, until it swings by itself at Auto Swing Time.
     /// </summary>
     [CreateAssetMenu(menuName = "Cleave/Melee Weapon", fileName = "Melee Weapon")]
     public class MeleeWeapon : ScriptableObject
@@ -54,6 +55,10 @@ namespace Cleave
         [Min(0f)] [SerializeField] float recoveryTime = 0.22f;
         [Tooltip("Recovery after a fully charged swing.")]
         [Min(0f)] [SerializeField] float chargedRecoveryTime = 0.45f;
+        [Tooltip("Seconds from the press after which a held charge swings by itself. 0 = never.")]
+        [Min(0f)] [SerializeField] float autoSwingTime = 2.5f;
+        [Tooltip("Holding on past full charge adds up to this much more damage (0.2 = +20%), reached at Auto Swing Time.")]
+        [Min(0f)] [SerializeField] float overchargeDamageBonus = 0.2f;
 
         [Header("Swings")]
         [SerializeField] SwingStyle quickStyle = SwingStyle.Slash;
@@ -87,6 +92,20 @@ namespace Cleave
         public float ChargedSwingTime => chargedSwingTime;
         public float RecoveryTime => recoveryTime;
         public float ChargedRecoveryTime => chargedRecoveryTime;
+        public float AutoSwingTime => autoSwingTime;
+        public float OverchargeDamageBonus => overchargeDamageBonus;
+
+        /// <summary>0..1 how far a hold has gone past full charge toward Auto Swing Time.</summary>
+        public float OverchargeFor(float held) => SwingMath.Overcharge(held, tapTime, chargeTime, autoSwingTime);
+
+        /// <summary>0..1 how hard the weapon shakes after holding for <paramref name="held"/> seconds: from nothing at
+        /// Tap Time, building up to full at Auto Swing Time (or at full charge with no auto swing).</summary>
+        public float ShakeFor(float held)
+        {
+            float end = autoSwingTime > tapTime ? autoSwingTime : tapTime + chargeTime;
+            float t = Mathf.Clamp01((held - tapTime) / Mathf.Max(0.0001f, end - tapTime));
+            return t * t;
+        }
         public SwingStyle QuickStyle => quickStyle;
         public SwingStyle ChargedStyle => chargedStyle;
         public float Arc => arc;
@@ -100,13 +119,15 @@ namespace Cleave
         public SwingSpec SpecFor(float held)
         {
             float charge = SwingMath.Charge(held, tapTime, chargeTime);
+            float overcharge = OverchargeFor(held);
             bool charged = held >= tapTime;
             return new SwingSpec
             {
                 Charged = charged,
                 Charge = charge,
+                Overcharge = overcharge,
                 Style = charged ? chargedStyle : quickStyle,
-                Damage = damage * Mathf.Lerp(1f, chargedDamageMultiplier, charge),
+                Damage = damage * Mathf.Lerp(1f, chargedDamageMultiplier, charge) * (1f + overchargeDamageBonus * overcharge),
                 Knockback = Mathf.Lerp(knockback, chargedKnockback, charge),
                 StaminaCost = Mathf.Lerp(staminaCost, chargedStaminaCost, charge),
                 Duration = charged ? chargedSwingTime : swingTime,
@@ -131,6 +152,8 @@ namespace Cleave
         public bool Charged;
         /// <summary>0..1 how full the charge was.</summary>
         public float Charge;
+        /// <summary>0..1 how long it was held on past full charge, toward the auto swing.</summary>
+        public float Overcharge;
         public SwingStyle Style;
         public float Damage;
         public float Knockback;

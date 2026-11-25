@@ -23,8 +23,9 @@ weapon floats in front of the view and is swung procedurally.
 ## How an attack goes
 
 1. Press: the weapon pulls back (wind-up). Let go within the weapon's **Tap Time** for a quick swing.
-2. Hold longer and it charges over **Charge Time**, pulling further back and trembling when full. Walk speed drops
-   to **Charging Speed** and sprinting stops.
+2. Hold longer and it charges over **Charge Time**, pulling further back. Walk speed drops to **Charging Speed** and
+   sprinting stops. The weapon shakes, harder the longer it is held. Holding on past full charge adds up to
+   **Overcharge Damage Bonus** more damage, and at **Auto Swing Time** (from the press) it swings by itself.
 3. Let go: the stamina cost is paid (`PayStamina`; false = no swing) and the swing sweeps its arc. Damage,
    knockback and cost go from the quick attack's to the full charge's with the charge.
 4. After the swing comes **Recovery**. A press during the swing or recovery is queued and starts once it ends.

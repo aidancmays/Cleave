@@ -33,6 +33,15 @@ namespace Cleave
         public static float Charge(float held, float tapTime, float chargeTime) =>
             Mathf.Clamp01((held - tapTime) / Mathf.Max(0.0001f, chargeTime));
 
+        /// <summary>0..1 how far a hold has gone past full charge toward <paramref name="autoSwingTime"/> (0 when there
+        /// is no auto swing, or it comes before full charge).</summary>
+        public static float Overcharge(float held, float tapTime, float chargeTime, float autoSwingTime)
+        {
+            float full = tapTime + chargeTime;
+            if (autoSwingTime <= full) return 0f;
+            return Mathf.Clamp01((held - full) / (autoSwingTime - full));
+        }
+
         /// <summary>Where (in progress) a swing starts after winding up to <paramref name="charge"/>.</summary>
         public static float WindUpProgress(float charge) => -Mathf.Lerp(WindUpBack, ChargedWindUpBack, Mathf.Clamp01(charge));
 

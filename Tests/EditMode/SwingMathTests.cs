@@ -15,6 +15,34 @@ namespace Cleave.Tests
         }
 
         [Test]
+        public void OverchargeBuildsFromFullChargeToAutoSwing()
+        {
+            Assert.AreEqual(0f, SwingMath.Overcharge(1f, 0.2f, 0.8f, 2.5f), 1e-5f);
+            Assert.AreEqual(0.5f, SwingMath.Overcharge(1.75f, 0.2f, 0.8f, 2.5f), 1e-5f);
+            Assert.AreEqual(1f, SwingMath.Overcharge(9f, 0.2f, 0.8f, 2.5f), 1e-5f);
+            Assert.AreEqual(0f, SwingMath.Overcharge(9f, 0.2f, 0.8f, 0f), 1e-5f, "no auto swing, no overcharge");
+        }
+
+        [Test]
+        public void ShakeGrowsTheLongerItIsHeld()
+        {
+            var weapon = ScriptableObject.CreateInstance<MeleeWeapon>();
+            try
+            {
+                Assert.AreEqual(0f, weapon.ShakeFor(weapon.TapTime * 0.5f), 1e-5f);
+                float early = weapon.ShakeFor(weapon.TapTime + weapon.ChargeTime);
+                float late = weapon.ShakeFor(weapon.AutoSwingTime - 0.1f);
+                Assert.Greater(early, 0f);
+                Assert.Greater(late, early);
+                Assert.AreEqual(1f, weapon.ShakeFor(weapon.AutoSwingTime), 1e-5f);
+            }
+            finally
+            {
+                Object.DestroyImmediate(weapon);
+            }
+        }
+
+        [Test]
         public void SwingProgressRunsFromStartToOne()
         {
             Assert.AreEqual(-0.3f, SwingMath.SwingProgress(-0.3f, 0f), 1e-5f);
@@ -69,12 +97,17 @@ namespace Cleave.Tests
                 Assert.AreEqual(weapon.StaminaCost, tap.StaminaCost, 1e-4f);
                 Assert.AreEqual(weapon.QuickStyle, tap.Style);
 
-                SwingSpec full = weapon.SpecFor(weapon.TapTime + weapon.ChargeTime + 1f);
+                SwingSpec full = weapon.SpecFor(weapon.TapTime + weapon.ChargeTime);
                 Assert.IsTrue(full.Charged);
                 Assert.AreEqual(1f, full.Charge, 1e-4f);
+                Assert.AreEqual(0f, full.Overcharge, 1e-4f);
                 Assert.AreEqual(weapon.Damage * weapon.ChargedDamageMultiplier, full.Damage, 1e-3f);
                 Assert.AreEqual(weapon.ChargedStaminaCost, full.StaminaCost, 1e-4f);
                 Assert.AreEqual(weapon.ChargedStyle, full.Style);
+
+                SwingSpec held = weapon.SpecFor(weapon.AutoSwingTime);
+                Assert.AreEqual(1f, held.Overcharge, 1e-4f);
+                Assert.AreEqual(full.Damage * (1f + weapon.OverchargeDamageBonus), held.Damage, 1e-3f);
 
                 SwingSpec half = weapon.SpecFor(weapon.TapTime + weapon.ChargeTime * 0.5f);
                 Assert.Greater(half.Damage, tap.Damage);

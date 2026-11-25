@@ -50,8 +50,10 @@ namespace Cleave
         [Header("Look")]
         [Tooltip("How far (metres) the idle weapon drifts.")]
         [Min(0f)] [SerializeField] float idleSway = 0.008f;
-        [Tooltip("How far (metres) the weapon trembles while held at full charge.")]
-        [Min(0f)] [SerializeField] float fullChargeTremble = 0.006f;
+        [Tooltip("How far (metres) the weapon shakes at its hardest, just before a held charge swings by itself. It builds up from nothing as the charge is held.")]
+        [Min(0f)] [SerializeField] float maxShake = 0.02f;
+        [Tooltip("How far (degrees) the weapon twists as it shakes at its hardest.")]
+        [Min(0f)] [SerializeField] float maxShakeTwist = 4f;
         [Tooltip("How quickly the drawn weapon follows its pose while swinging, and otherwise.")]
         [Min(1f)] [SerializeField] float swingFollow = 45f;
         [Min(1f)] [SerializeField] float follow = 18f;
@@ -237,7 +239,8 @@ namespace Cleave
             switch (phase)
             {
                 case AttackPhase.WindingUp:
-                    if (!trigger) LetGo();
+                    // Let go, or held so long it swings by itself.
+                    if (!trigger || (weapon.AutoSwingTime > 0f && Time.time - windStart >= weapon.AutoSwingTime)) LetGo();
                     break;
                 case AttackPhase.Swinging:
                     UpdateProgress();
@@ -500,7 +503,8 @@ namespace Cleave
                     bool flip = IsOwner && style == SwingStyle.Slash && !charging && nextMirrored;
                     WeaponPose back = SwingMath.Swing(style, SwingMath.WindUpProgress(charge), weapon.Arc, flip);
                     WeaponPose pose = charging ? back : WeaponPose.Lerp(idle, back, SwingMath.Smooth(held / weapon.TapTime));
-                    if (charge >= 1f) pose.Position += Tremble(fullChargeTremble);
+                    float shake = weapon.ShakeFor(held);
+                    if (shake > 0f) Shake(ref pose, shake);
                     return pose;
                 }
                 case AttackPhase.Swinging:
@@ -517,10 +521,13 @@ namespace Cleave
             }
         }
 
-        static Vector3 Tremble(float amount)
+        // Shaking gets faster as well as wider the harder it is.
+        void Shake(ref WeaponPose pose, float amount)
         {
-            float t = Time.time * 40f;
-            return new Vector3(Mathf.PerlinNoise(t, 0.3f) - 0.5f, Mathf.PerlinNoise(0.7f, t) - 0.5f, 0f) * (2f * amount);
+            float t = Time.time * Mathf.Lerp(20f, 45f, amount);
+            Vector3 noise = new Vector3(Mathf.PerlinNoise(t, 0.3f), Mathf.PerlinNoise(0.7f, t), Mathf.PerlinNoise(t, 5.1f)) - Vector3.one * 0.5f;
+            pose.Position += new Vector3(noise.x, noise.y, 0f) * (2f * maxShake * amount);
+            pose.Rotation *= Quaternion.Euler(noise.y * 2f * maxShakeTwist * amount, 0f, noise.z * 2f * maxShakeTwist * amount);
         }
 
         public override void OnDestroy()
