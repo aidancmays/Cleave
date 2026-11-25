@@ -126,6 +126,11 @@ namespace Cleave
         public static float CentreFalloff(float degrees, float halfDamageAngle) =>
             halfDamageAngle <= 0f ? 1f : Mathf.Pow(0.5f, Mathf.Max(0f, degrees) / halfDamageAngle);
 
+        /// <summary>Damage share for the <paramref name="index"/>th thing (0 = first) one swing hits: Hit Falloff
+        /// to that power.</summary>
+        public static float HitFalloff(int index, float falloff) =>
+            index <= 0 ? 1f : Mathf.Pow(Mathf.Clamp01(falloff), index);
+
         /// <summary>
         /// Where the weapon is drawn back while winding up to <paramref name="charge"/>: cocked to the side it will
         /// swing from (raised for an overhead, pulled in for a thrust), but kept in view so the charge can be seen.

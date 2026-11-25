@@ -39,8 +39,8 @@ namespace Cleave
         [Min(0.1f)] [SerializeField] float reach = 2f;
         [Tooltip("How thick the swing is (sphere cast radius), so it doesn't have to be pixel perfect.")]
         [Min(0f)] [SerializeField] float hitRadius = 0.15f;
-        [Tooltip("Most things one swing can hit. Walls stop it either way.")]
-        [Min(1)] [SerializeField] int maxTargets = 4;
+        [Tooltip("Each further thing one swing hits takes this fraction of the damage of the one before (0.6 = 100%, 60%, 36%...). No cap on how many; walls stop the swing.")]
+        [Range(0f, 1f)] [SerializeField] float hitFalloff = 0.6f;
         [Tooltip("Damage halves for every this many degrees a target is off the centre of the view, so what you aim at takes most of it. 0 = no falloff.")]
         [Min(0f)] [SerializeField] float halfDamageAngle = 15f;
         [Tooltip("Impulse (N s) given to what a quick attack hits, along the swing.")]
@@ -95,7 +95,7 @@ namespace Cleave
         public float ChargedDamageMultiplier => chargedDamageMultiplier;
         public float Reach => reach;
         public float HitRadius => hitRadius;
-        public int MaxTargets => maxTargets;
+        public float HitFalloff => hitFalloff;
         public float HalfDamageAngle => halfDamageAngle;
         public float Knockback => knockback;
         public float ChargedKnockback => chargedKnockback;

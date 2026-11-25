@@ -53,6 +53,16 @@ namespace Cleave.Tests
         }
 
         [Test]
+        public void HitFalloffShrinksEachFurtherHit()
+        {
+            Assert.AreEqual(1f, SwingMath.HitFalloff(0, 0.6f), 1e-5f);
+            Assert.AreEqual(0.6f, SwingMath.HitFalloff(1, 0.6f), 1e-5f);
+            Assert.AreEqual(0.36f, SwingMath.HitFalloff(2, 0.6f), 1e-5f);
+            Assert.AreEqual(1f, SwingMath.HitFalloff(5, 1f), 1e-5f, "1 = no falloff");
+            Assert.AreEqual(0f, SwingMath.HitFalloff(1, 0f), 1e-5f, "0 = only the first takes damage");
+        }
+
+        [Test]
         public void CentreFalloffHalvesEveryHalfAngle()
         {
             Assert.AreEqual(1f, SwingMath.CentreFalloff(0f, 15f), 1e-5f);

@@ -412,8 +412,7 @@ namespace Cleave
                 if (struck.Contains(target)) return;
                 struck.Add(target);
                 Contact?.Invoke(collider, point, true);
-                Report(target, network, point, knock, share);
-                if (++landed >= weapon.MaxTargets) sweepDone = true;
+                Report(target, network, point, knock, share * SwingMath.HitFalloff(landed++, weapon.HitFalloff));
                 return;
             }
             if (drawCasts) Debug.DrawRay(origin, direction * distance, new Color(1f, 1f, 1f, 0.3f), 1f);

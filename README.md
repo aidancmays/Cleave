@@ -14,7 +14,7 @@ weapon floats in front of the view and is swung procedurally.
 
 | Piece | What it does |
 |---|---|
-| **Melee Weapon** (Create > Cleave > Melee Weapon) | A kind of weapon: damage, charged damage multiplier, reach, hit radius, most targets per swing, knockback, timings (tap time, charge time, swing and recovery times), the quick and charged swing styles (Slash, Overhead, Thrust, or Spin, which turns the player round further the more it is charged) and arc, stamina costs, where it floats, walk speed while charging. |
+| **Melee Weapon** (Create > Cleave > Melee Weapon) | A kind of weapon: damage, charged damage multiplier, reach, hit radius, per-hit damage falloff (no cap on targets), knockback, timings (tap time, charge time, swing and recovery times), the quick and charged swing styles (Slash, Overhead, Thrust, or Spin, which turns the player round further the more it is charged) and arc, stamina costs, where it floats, walk speed while charging. |
 | **Weapon View** | The root of a weapon's floating prefab, pointing to its Melee Weapon. Model it along +Y with the grip at the origin. Its colliders and rigidbodies are removed when it is put in view. |
 | **Attacker** | On the player root (with a NetworkObject). Holds a Weapon View in front of Aim and runs attacks. |
 | **Hittable** | On anything swings can land on (with a NetworkObject). The server raises `Struck(MeleeHit)`; your code spends health, flinches, breaks. Optionally knocks its Rigidbody back. |

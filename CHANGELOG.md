@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.0
+
+- No more Max Targets cap. Melee Weapon's Hit Falloff (default 0.6) instead scales each further thing one swing
+  hits: the first takes full damage, the second 60%, the third 36%, and so on (on top of the centre falloff).
+  Knockback is not reduced. Walls still stop the swing. Assets that set Max Targets pick up the 0.6 default.
+
 ## 0.4.0
 
 - Spin swing style: a horizontal sweep that turns the player round with it (Attacker Spin Body, default the root),
