@@ -470,6 +470,7 @@ namespace Cleave
             Knockback = Mathf.Max(0f, knockback),
             Charged = charged,
             Charge = Mathf.Clamp01(charge),
+            DamageType = weapon != null ? weapon.DamageTypeFor(charged) : null,
         };
 
         // ---- Network ----

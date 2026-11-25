@@ -1,3 +1,4 @@
+using GameplayTags;
 using UnityEngine;
 
 namespace Cleave
@@ -76,6 +77,12 @@ namespace Cleave
         [Tooltip("Degrees a Spin turns the player round, barely charged and fully charged. In between it grows exponentially, so a little charge barely turns at all.")]
         [SerializeField] Vector2 spinArc = new Vector2(15f, 360f);
 
+        [Header("Damage types")]
+        [Tooltip("What kind of damage a quick attack does (a Gameplay Tag such as Damage.Slash), for whatever it lands on to resist or be knocked further by. Empty = none.")]
+        [SerializeField] GameplayTag quickDamageType;
+        [Tooltip("What kind of damage a charged attack does. Empty = none.")]
+        [SerializeField] GameplayTag chargedDamageType;
+
         [Header("Stamina")]
         [Min(0f)] [SerializeField] float staminaCost = 6f;
         [Tooltip("Cost of a fully charged attack.")]
@@ -122,6 +129,11 @@ namespace Cleave
             return t * t;
         }
         public SwingStyle QuickStyle => quickStyle;
+        public GameplayTag QuickDamageType => quickDamageType;
+        public GameplayTag ChargedDamageType => chargedDamageType;
+
+        /// <summary>The damage type of a quick (<paramref name="charged"/> false) or charged attack. Null = none.</summary>
+        public GameplayTag DamageTypeFor(bool charged) => charged ? chargedDamageType : quickDamageType;
         public SwingStyle ChargedStyle => chargedStyle;
         public float Arc => arc;
         public float ThrustReachBonus => thrustReachBonus;
@@ -159,6 +171,13 @@ namespace Cleave
                 Duration = duration,
                 Recovery = charged ? Mathf.Lerp(recoveryTime, chargedRecoveryTime, charge) : recoveryTime,
             };
+        }
+
+        /// <summary>For setting up damage types from code (editor builders).</summary>
+        public void SetDamageTypes(GameplayTag quick, GameplayTag charged)
+        {
+            quickDamageType = quick;
+            chargedDamageType = charged;
         }
 
         /// <summary>For setting up stand-in weapons from code (editor builders).</summary>

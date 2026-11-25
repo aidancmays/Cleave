@@ -3,6 +3,7 @@
     "rootNamespace": "Cleave.Tests",
     "references": [
         "Cleave",
+        "GameplayTags",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

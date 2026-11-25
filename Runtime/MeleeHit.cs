@@ -1,3 +1,4 @@
+using GameplayTags;
 using UnityEngine;
 
 namespace Cleave
@@ -20,5 +21,7 @@ namespace Cleave
         public bool Charged;
         /// <summary>0..1 how full the charge was.</summary>
         public float Charge;
+        /// <summary>What kind of damage it is: the weapon's Quick or Charged Damage Type. Null = none set.</summary>
+        public GameplayTag DamageType;
     }
 }

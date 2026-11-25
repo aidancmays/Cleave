@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.0
+
+- Damage types: Melee Weapon has a Quick Damage Type and a Charged Damage Type (Gameplay Tags, such as Damage.Slash
+  or Damage.Blunt), and each MeleeHit carries the one for its attack in `DamageType` (filled on the server). Empty
+  by default, so existing weapons and code are unchanged.
+
 ## 0.7.0
 
 - Thrusts (wind-up, swing and recovery) keep the idle Hold Twist about the weapon's length plus a new Thrust Twist
