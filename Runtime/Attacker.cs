@@ -284,12 +284,16 @@ namespace Cleave
                 return;
             }
 
-            bool flip = next.Style == SwingStyle.Slash && !next.Charged && nextMirrored;
-            if (next.Style == SwingStyle.Slash && !next.Charged) nextMirrored = !nextMirrored;
+            // Quick slashes and spins alternate direction.
+            bool alternates = Alternates(next.Style, next.Charged);
+            bool flip = alternates && nextMirrored;
+            if (alternates) nextMirrored = !nextMirrored;
             float start = SwingMath.WindUpProgress(next.Charge);
             BeginSwing(next, flip, start);
             SwingRpc((byte)next.Style, next.Charged, next.Charge, flip, start, next.Duration, next.Recovery, next.SpinArc);
         }
+
+        static bool Alternates(SwingStyle style, bool charged) => style == SwingStyle.Spin || (style == SwingStyle.Slash && !charged);
 
         /// <summary>Owner: drops a wind-up without swinging (a swing already going finishes).</summary>
         public void CancelWindUp()
@@ -335,27 +339,36 @@ namespace Cleave
             }
         }
 
-        // Owner: turns the player on round the spin (right to left), sweeping straight ahead as it goes.
+        // Owner: turns the player on round the spin (right to left, or left to right when mirrored), sweeping
+        // level ahead as it goes. Something solid only blocks the angles it is in, not the rest of the turn.
         void Spin()
         {
             float target = Mathf.Clamp01(progress) * spec.SpinArc;
             float delta = target - spun;
             if (delta <= 0f) return;
+            bool first = spun <= 0f;
             spun = target;
+            float turn = mirrored ? 1f : -1f;
             Transform body = spinBody != null ? spinBody : transform;
-            body.Rotate(0f, -delta, 0f, Space.World);
-            if (sweepDone || weapon == null) return;
+            body.Rotate(0f, turn * delta, 0f, Space.World);
+            if (weapon == null) return;
 
-            // Fill in the angles turned through this frame: earlier ones were to the right of where it faces now.
+            // Fill in the angles turned through this frame (the first frame also takes where it started from).
             Transform eyes = Aim;
+            Vector3 ahead = Vector3.ProjectOnPlane(eyes.forward, Vector3.up);
+            if (ahead.sqrMagnitude < 1e-6f) ahead = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
+            ahead.Normalize();
+            Vector3 side = Vector3.Cross(Vector3.up, ahead) * turn; // the way the turn moves
             int steps = Mathf.Max(1, Mathf.CeilToInt(delta / 6f));
-            for (int i = 1; i <= steps && !sweepDone; i++)
+            for (int i = first ? 0 : 1; i <= steps; i++)
             {
-                Quaternion back = Quaternion.AngleAxis(delta * (1f - (float)i / steps), Vector3.up);
-                Vector3 direction = back * eyes.forward;
-                Vector3 knock = (direction - back * eyes.right).normalized;
+                Quaternion back = Quaternion.AngleAxis(-turn * delta * (1f - (float)i / steps), Vector3.up);
+                Vector3 direction = back * ahead;
+                Vector3 knock = (direction + back * side).normalized;
+                sweepDone = false;
                 CastAlong(direction, weapon.Reach, knock, 1f);
             }
+            sweepDone = false;
         }
 
         void SweepBetween(float from, float to)
@@ -537,7 +550,7 @@ namespace Cleave
                     bool charging = held >= weapon.TapTime;
                     float charge = SwingMath.Charge(held, weapon.TapTime, weapon.ChargeTime);
                     SwingStyle style = charging ? weapon.ChargedStyle : weapon.QuickStyle;
-                    bool flip = IsOwner && style == SwingStyle.Slash && !charging && nextMirrored;
+                    bool flip = IsOwner && Alternates(style, charging) && nextMirrored;
                     WeaponPose back = SwingMath.WindUp(style, charge, flip);
                     WeaponPose pose = charging ? back : WeaponPose.Lerp(idle, back, SwingMath.Smooth(held / weapon.TapTime));
                     float shake = weapon.ShakeFor(held);

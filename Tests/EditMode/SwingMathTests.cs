@@ -111,10 +111,13 @@ namespace Cleave.Tests
                 SwingSpec full = weapon.SpecFor(weapon.TapTime + weapon.ChargeTime);
                 Assert.AreEqual(0f, quick.SpinArc, "only the spin turns");
                 Assert.AreEqual(SwingStyle.Spin, low.Style);
+                SwingSpec half = weapon.SpecFor(weapon.TapTime + weapon.ChargeTime * 0.5f);
                 Assert.AreEqual(weapon.SpinArc.x, low.SpinArc, 1e-3f);
                 Assert.AreEqual(weapon.SpinArc.y, full.SpinArc, 1e-3f);
+                Assert.Less(half.SpinArc, (weapon.SpinArc.x + weapon.SpinArc.y) * 0.5f, "exponential, not linear");
+                Assert.Greater(half.SpinArc, low.SpinArc);
                 Assert.Greater(full.Duration, low.Duration);
-                Assert.AreEqual(low.Duration / low.SpinArc, full.Duration / full.SpinArc, 1e-4f, "same turning speed");
+                Assert.AreEqual(half.Duration / half.SpinArc, full.Duration / full.SpinArc, 1e-4f, "same turning speed");
             }
             finally
             {

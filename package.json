@@ -1,6 +1,6 @@
 {
   "name": "com.aidancmays.cleave",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "displayName": "Cleave",
   "description": "Networked first-person melee for co-op games (Netcode for GameObjects). Tap the attack for a quick swing, hold it to wind up a charged one that hits harder and knocks things back further; hold on past full charge for a little more damage as the weapon shakes harder, until it swings by itself. Weapons are profiles (damage, reach, timings, swing styles including a spin that turns the player, stamina costs) shown as a floating weapon swung procedurally in front of the view, no hands or animations needed. The owner sweeps the swing for hits and the server applies them to Hittables and loose rigidbodies; a training dummy is included.",
   "unity": "6000.3",

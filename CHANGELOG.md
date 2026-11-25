@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.0
+
+- Spins alternate direction like quick slashes (right to left, then left to right).
+- Spin Arc now grows exponentially with charge (default 15 to 360 degrees), so a little charge barely turns and a
+  full one goes all the way round. Charged Swing Time is now for a half turn (small spins take at least a third).
+- Spin hits: the sweep is level (looking down no longer hits the floor), walls only block the angles they are in
+  instead of ending the rest of the spin, and the angle the spin starts from is swept too.
+
 ## 0.5.0
 
 - No more Max Targets cap. Melee Weapon's Hit Falloff (default 0.6) instead scales each further thing one swing

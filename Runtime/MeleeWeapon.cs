@@ -14,8 +14,8 @@ namespace Cleave
         /// <summary>Straight ahead and back: a narrow line that reaches a little further.</summary>
         Thrust,
 
-        /// <summary>A horizontal sweep that turns the whole player round with it, right to left, further the more
-        /// it is charged (Spin Arc). Hits whatever passes in front.</summary>
+        /// <summary>A horizontal sweep that turns the whole player round with it, further the more it is charged
+        /// (Spin Arc, on an exponential curve). Alternates direction like slashes. Hits whatever passes in front.</summary>
         Spin,
     }
 
@@ -73,8 +73,8 @@ namespace Cleave
         [Range(10f, 180f)] [SerializeField] float arc = 110f;
         [Tooltip("Extra metres of reach a thrust has.")]
         [Min(0f)] [SerializeField] float thrustReachBonus = 0.4f;
-        [Tooltip("Degrees a Spin turns the player round, barely charged and fully charged.")]
-        [SerializeField] Vector2 spinArc = new Vector2(180f, 360f);
+        [Tooltip("Degrees a Spin turns the player round, barely charged and fully charged. In between it grows exponentially, so a little charge barely turns at all.")]
+        [SerializeField] Vector2 spinArc = new Vector2(15f, 360f);
 
         [Header("Stamina")]
         [Min(0f)] [SerializeField] float staminaCost = 6f;
@@ -137,10 +137,11 @@ namespace Cleave
             float overcharge = OverchargeFor(held);
             bool charged = held >= tapTime;
             SwingStyle style = charged ? chargedStyle : quickStyle;
-            float spin = style == SwingStyle.Spin ? Mathf.Lerp(spinArc.x, spinArc.y, charge) : 0f;
+            float spin = style == SwingStyle.Spin ? SwingMath.SpinArc(spinArc.x, spinArc.y, charge) : 0f;
             float duration = charged ? chargedSwingTime : swingTime;
-            // A spin's swing time is for its smallest turn; further turns take longer at the same speed.
-            if (spin > 0f) duration *= spin / Mathf.Max(1f, spinArc.x);
+            // A spin's swing time is for a half turn; further turns take longer at the same speed (small ones no less
+            // than a third of it).
+            if (spin > 0f) duration *= Mathf.Max(SwingMath.MinSpinTime, spin / 180f);
             return new SwingSpec
             {
                 Charged = charged,

@@ -88,8 +88,8 @@ namespace Cleave
         /// <summary>Where the weapon is at progress <paramref name="s"/> of a swing (also below 0, wound back).</summary>
         public static WeaponPose Swing(SwingStyle style, float s, float arc, bool mirrored)
         {
-            // A spin turns the player instead: the weapon is held out across the view, leading left.
-            if (style == SwingStyle.Spin) return Swing(SwingStyle.Slash, 0.62f, 110f, false);
+            // A spin turns the player instead: the weapon is held out across the view, leading the turn.
+            if (style == SwingStyle.Spin) return Swing(SwingStyle.Slash, 0.62f, 110f, mirrored);
             if (style == SwingStyle.Thrust)
             {
                 float z = Mathf.LerpUnclamped(0.4f, 0.95f, ThrustExtension(s));
@@ -126,6 +126,19 @@ namespace Cleave
         public static float CentreFalloff(float degrees, float halfDamageAngle) =>
             halfDamageAngle <= 0f ? 1f : Mathf.Pow(0.5f, Mathf.Max(0f, degrees) / halfDamageAngle);
 
+        /// <summary>Shortest a spin takes, as a fraction of its swing time (which is for a half turn).</summary>
+        public const float MinSpinTime = 1f / 3f;
+
+        /// <summary>Degrees a spin turns at <paramref name="charge"/>: from <paramref name="low"/> to
+        /// <paramref name="high"/> exponentially, so it stays small until the charge is nearly full.</summary>
+        public static float SpinArc(float low, float high, float charge)
+        {
+            charge = Mathf.Clamp01(charge);
+            low = Mathf.Max(1f, low);
+            high = Mathf.Max(low, high);
+            return low * Mathf.Pow(high / low, charge);
+        }
+
         /// <summary>Damage share for the <paramref name="index"/>th thing (0 = first) one swing hits: Hit Falloff
         /// to that power.</summary>
         public static float HitFalloff(int index, float falloff) =>
@@ -139,11 +152,7 @@ namespace Cleave
         public static WeaponPose WindUp(SwingStyle style, float charge, bool mirrored)
         {
             charge = Mathf.Clamp01(charge);
-            if (style == SwingStyle.Spin)
-            {
-                style = SwingStyle.Slash;
-                mirrored = false;
-            }
+            if (style == SwingStyle.Spin) style = SwingStyle.Slash;
             switch (style)
             {
                 case SwingStyle.Slash:
