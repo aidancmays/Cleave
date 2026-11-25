@@ -48,6 +48,9 @@ namespace Cleave
         [Min(0f)] [SerializeField] float queueTime = 0.25f;
 
         [Header("Look")]
+        [Tooltip("What a Spin turns round. Empty = this object (the player root).")]
+        [SerializeField] Transform spinBody;
+
         [Tooltip("How far (metres) the idle weapon drifts.")]
         [Min(0f)] [SerializeField] float idleSway = 0.008f;
         [Tooltip("How far (metres) the weapon shakes at its hardest, just before a held charge swings by itself. It builds up from nothing as the charge is held.")]
@@ -82,6 +85,7 @@ namespace Cleave
         float startProgress;
         float progress;
         float lastProgress;
+        float spun;
         int landed;
         bool sweepDone;
         bool lastTrigger;
@@ -284,7 +288,7 @@ namespace Cleave
             if (next.Style == SwingStyle.Slash && !next.Charged) nextMirrored = !nextMirrored;
             float start = SwingMath.WindUpProgress(next.Charge);
             BeginSwing(next, flip, start);
-            SwingRpc((byte)next.Style, next.Charged, next.Charge, flip, start, next.Duration, next.Recovery);
+            SwingRpc((byte)next.Style, next.Charged, next.Charge, flip, start, next.Duration, next.Recovery, next.SpinArc);
         }
 
         /// <summary>Owner: drops a wind-up without swinging (a swing already going finishes).</summary>
@@ -306,6 +310,7 @@ namespace Cleave
             mirrored = flip;
             startProgress = start;
             progress = lastProgress = start;
+            spun = 0f;
             phase = AttackPhase.Swinging;
             phaseStart = Time.time;
             landed = 0;
@@ -320,7 +325,8 @@ namespace Cleave
             if (phase != AttackPhase.Swinging) return;
             float t = (Time.time - phaseStart) / Mathf.Max(0.01f, spec.Duration);
             progress = SwingMath.SwingProgress(startProgress, t);
-            if (IsOwner && !sweepDone && weapon != null) SweepBetween(lastProgress, progress);
+            if (IsOwner && spec.Style == SwingStyle.Spin) Spin();
+            else if (IsOwner && !sweepDone && weapon != null) SweepBetween(lastProgress, progress);
             lastProgress = progress;
             if (t >= 1f)
             {
@@ -329,12 +335,35 @@ namespace Cleave
             }
         }
 
+        // Owner: turns the player on round the spin (right to left), sweeping straight ahead as it goes.
+        void Spin()
+        {
+            float target = Mathf.Clamp01(progress) * spec.SpinArc;
+            float delta = target - spun;
+            if (delta <= 0f) return;
+            spun = target;
+            Transform body = spinBody != null ? spinBody : transform;
+            body.Rotate(0f, -delta, 0f, Space.World);
+            if (sweepDone || weapon == null) return;
+
+            // Fill in the angles turned through this frame: earlier ones were to the right of where it faces now.
+            Transform eyes = Aim;
+            int steps = Mathf.Max(1, Mathf.CeilToInt(delta / 6f));
+            for (int i = 1; i <= steps && !sweepDone; i++)
+            {
+                Quaternion back = Quaternion.AngleAxis(delta * (1f - (float)i / steps), Vector3.up);
+                Vector3 direction = back * eyes.forward;
+                Vector3 knock = (direction - back * eyes.right).normalized;
+                CastAlong(direction, weapon.Reach, knock, 1f);
+            }
+        }
+
         void SweepBetween(float from, float to)
         {
             if (spec.Style == SwingStyle.Thrust)
             {
                 if (SwingMath.CanHit(spec.Style, to))
-                    Cast(to, weapon.Reach * Mathf.Lerp(0.7f, 1f, SwingMath.ThrustExtension(to)));
+                    Cast(to, (weapon.Reach + weapon.ThrustReachBonus) * Mathf.Lerp(0.7f, 1f, SwingMath.ThrustExtension(to)));
                 return;
             }
 
@@ -350,8 +379,15 @@ namespace Cleave
         void Cast(float s, float distance)
         {
             Transform eyes = Aim;
-            Vector3 origin = eyes.position;
             Vector3 direction = eyes.rotation * SwingMath.Direction(spec.Style, s, weapon.Arc, mirrored);
+            // What is aimed at takes most of it; things caught off to the side take less.
+            float share = SwingMath.CentreFalloff(Vector3.Angle(eyes.forward, direction), weapon.HalfDamageAngle);
+            CastAlong(direction, distance, KnockDirection(s, direction), share);
+        }
+
+        void CastAlong(Vector3 direction, float distance, Vector3 knock, float share)
+        {
+            Vector3 origin = Aim.position;
             int count = Physics.SphereCastNonAlloc(origin, weapon.HitRadius, direction, casts, distance, hitMask, QueryTriggerInteraction.Ignore);
             Array.Sort(casts, 0, count, byDistance);
 
@@ -376,9 +412,7 @@ namespace Cleave
                 if (struck.Contains(target)) return;
                 struck.Add(target);
                 Contact?.Invoke(collider, point, true);
-                // What is aimed at takes most of it; things caught off to the side take less.
-                float share = SwingMath.CentreFalloff(Vector3.Angle(eyes.forward, direction), weapon.HalfDamageAngle);
-                Report(target, network, point, KnockDirection(s, direction), share);
+                Report(target, network, point, knock, share);
                 if (++landed >= weapon.MaxTargets) sweepDone = true;
                 return;
             }
@@ -453,12 +487,13 @@ namespace Cleave
         }
 
         [Rpc(SendTo.NotMe)]
-        void SwingRpc(byte style, bool charged, float charge, bool flip, float start, float duration, float recovery)
+        void SwingRpc(byte style, bool charged, float charge, bool flip, float start, float duration, float recovery, float spinArc)
         {
             if (IsOwner) return;
             BeginSwing(new SwingSpec
             {
                 Style = (SwingStyle)style,
+                SpinArc = spinArc,
                 Charged = charged,
                 Charge = charge,
                 Duration = duration,

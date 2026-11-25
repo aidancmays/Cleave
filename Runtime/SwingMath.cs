@@ -88,6 +88,8 @@ namespace Cleave
         /// <summary>Where the weapon is at progress <paramref name="s"/> of a swing (also below 0, wound back).</summary>
         public static WeaponPose Swing(SwingStyle style, float s, float arc, bool mirrored)
         {
+            // A spin turns the player instead: the weapon is held out across the view, leading left.
+            if (style == SwingStyle.Spin) return Swing(SwingStyle.Slash, 0.62f, 110f, false);
             if (style == SwingStyle.Thrust)
             {
                 float z = Mathf.LerpUnclamped(0.4f, 0.95f, ThrustExtension(s));
@@ -132,6 +134,11 @@ namespace Cleave
         public static WeaponPose WindUp(SwingStyle style, float charge, bool mirrored)
         {
             charge = Mathf.Clamp01(charge);
+            if (style == SwingStyle.Spin)
+            {
+                style = SwingStyle.Slash;
+                mirrored = false;
+            }
             switch (style)
             {
                 case SwingStyle.Slash:

@@ -13,6 +13,10 @@ namespace Cleave
 
         /// <summary>Straight ahead and back: a narrow line that reaches a little further.</summary>
         Thrust,
+
+        /// <summary>A horizontal sweep that turns the whole player round with it, right to left, further the more
+        /// it is charged (Spin Arc). Hits whatever passes in front.</summary>
+        Spin,
     }
 
     /// <summary>
@@ -67,6 +71,10 @@ namespace Cleave
         [SerializeField] SwingStyle chargedStyle = SwingStyle.Overhead;
         [Tooltip("Degrees a slash or overhead swing sweeps through.")]
         [Range(10f, 180f)] [SerializeField] float arc = 110f;
+        [Tooltip("Extra metres of reach a thrust has.")]
+        [Min(0f)] [SerializeField] float thrustReachBonus = 0.4f;
+        [Tooltip("Degrees a Spin turns the player round, barely charged and fully charged.")]
+        [SerializeField] Vector2 spinArc = new Vector2(180f, 360f);
 
         [Header("Stamina")]
         [Min(0f)] [SerializeField] float staminaCost = 6f;
@@ -114,6 +122,8 @@ namespace Cleave
         public SwingStyle QuickStyle => quickStyle;
         public SwingStyle ChargedStyle => chargedStyle;
         public float Arc => arc;
+        public float ThrustReachBonus => thrustReachBonus;
+        public Vector2 SpinArc => spinArc;
         public float StaminaCost => staminaCost;
         public float ChargedStaminaCost => chargedStaminaCost;
         public Vector3 HoldOffset => holdOffset;
@@ -126,16 +136,22 @@ namespace Cleave
             float charge = SwingMath.Charge(held, tapTime, chargeTime);
             float overcharge = OverchargeFor(held);
             bool charged = held >= tapTime;
+            SwingStyle style = charged ? chargedStyle : quickStyle;
+            float spin = style == SwingStyle.Spin ? Mathf.Lerp(spinArc.x, spinArc.y, charge) : 0f;
+            float duration = charged ? chargedSwingTime : swingTime;
+            // A spin's swing time is for its smallest turn; further turns take longer at the same speed.
+            if (spin > 0f) duration *= spin / Mathf.Max(1f, spinArc.x);
             return new SwingSpec
             {
                 Charged = charged,
                 Charge = charge,
                 Overcharge = overcharge,
-                Style = charged ? chargedStyle : quickStyle,
+                Style = style,
+                SpinArc = spin,
                 Damage = damage * Mathf.Lerp(1f, chargedDamageMultiplier, charge) * (1f + overchargeDamageBonus * overcharge),
                 Knockback = Mathf.Lerp(knockback, chargedKnockback, charge),
                 StaminaCost = Mathf.Lerp(staminaCost, chargedStaminaCost, charge),
-                Duration = charged ? chargedSwingTime : swingTime,
+                Duration = duration,
                 Recovery = charged ? Mathf.Lerp(recoveryTime, chargedRecoveryTime, charge) : recoveryTime,
             };
         }
@@ -160,6 +176,8 @@ namespace Cleave
         /// <summary>0..1 how long it was held on past full charge, toward the auto swing.</summary>
         public float Overcharge;
         public SwingStyle Style;
+        /// <summary>Degrees a Spin turns the player (0 for other styles).</summary>
+        public float SpinArc;
         public float Damage;
         public float Knockback;
         public float StaminaCost;

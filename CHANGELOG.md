@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0
+
+- Spin swing style: a horizontal sweep that turns the player round with it (Attacker Spin Body, default the root),
+  between Spin Arc's two angles (default 180 to 360 degrees) by charge. Its swing time is for the smallest turn;
+  bigger turns take longer at the same speed. Spin hits take full damage (they are always straight ahead).
+- Thrust Reach Bonus (default 0.4 m) on Melee Weapon.
+
 ## 0.3.0
 
 - The weapon's edge (its X axis) now leads every slash and overhead swing and wind-up; while idle it is turned

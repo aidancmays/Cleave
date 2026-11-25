@@ -90,6 +90,29 @@ namespace Cleave.Tests
         }
 
         [Test]
+        public void SpinTurnsFurtherAndLongerWithCharge()
+        {
+            var weapon = ScriptableObject.CreateInstance<MeleeWeapon>();
+            try
+            {
+                weapon.Setup(10f, 2f, SwingStyle.Slash, SwingStyle.Spin);
+                SwingSpec quick = weapon.SpecFor(0f);
+                SwingSpec low = weapon.SpecFor(weapon.TapTime);
+                SwingSpec full = weapon.SpecFor(weapon.TapTime + weapon.ChargeTime);
+                Assert.AreEqual(0f, quick.SpinArc, "only the spin turns");
+                Assert.AreEqual(SwingStyle.Spin, low.Style);
+                Assert.AreEqual(weapon.SpinArc.x, low.SpinArc, 1e-3f);
+                Assert.AreEqual(weapon.SpinArc.y, full.SpinArc, 1e-3f);
+                Assert.Greater(full.Duration, low.Duration);
+                Assert.AreEqual(low.Duration / low.SpinArc, full.Duration / full.SpinArc, 1e-4f, "same turning speed");
+            }
+            finally
+            {
+                Object.DestroyImmediate(weapon);
+            }
+        }
+
+        [Test]
         public void SwingProgressRunsFromStartToOne()
         {
             Assert.AreEqual(-0.3f, SwingMath.SwingProgress(-0.3f, 0f), 1e-5f);
