@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.0
+
+- Thrusts (wind-up, swing and recovery) keep the idle Hold Twist about the weapon's length plus a new Thrust Twist
+  (default -60 degrees), instead of snapping to a fixed roll that could look flipped.
+
 ## 0.6.0
 
 - Spins alternate direction like quick slashes (right to left, then left to right).

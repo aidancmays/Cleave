@@ -539,6 +539,14 @@ namespace Cleave
 
         // ---- Look ----
 
+        // A thrust keeps the idle turn about the weapon's length, plus Thrust Twist.
+        WeaponPose Twisted(WeaponPose pose, SwingStyle style)
+        {
+            if (style == SwingStyle.Thrust)
+                pose.Rotation *= Quaternion.AngleAxis(weapon.HoldTwist + weapon.ThrustTwist, Vector3.up);
+            return pose;
+        }
+
         WeaponPose TargetPose()
         {
             WeaponPose idle = SwingMath.Idle(weapon);
@@ -551,17 +559,17 @@ namespace Cleave
                     float charge = SwingMath.Charge(held, weapon.TapTime, weapon.ChargeTime);
                     SwingStyle style = charging ? weapon.ChargedStyle : weapon.QuickStyle;
                     bool flip = IsOwner && Alternates(style, charging) && nextMirrored;
-                    WeaponPose back = SwingMath.WindUp(style, charge, flip);
+                    WeaponPose back = Twisted(SwingMath.WindUp(style, charge, flip), style);
                     WeaponPose pose = charging ? back : WeaponPose.Lerp(idle, back, SwingMath.Smooth(held / weapon.TapTime));
                     float shake = weapon.ShakeFor(held);
                     if (shake > 0f) Shake(ref pose, shake);
                     return pose;
                 }
                 case AttackPhase.Swinging:
-                    return SwingMath.Swing(spec.Style, progress, weapon.Arc, mirrored);
+                    return Twisted(SwingMath.Swing(spec.Style, progress, weapon.Arc, mirrored), spec.Style);
                 case AttackPhase.Recovering:
                 {
-                    WeaponPose end = SwingMath.Swing(spec.Style, 1f, weapon.Arc, mirrored);
+                    WeaponPose end = Twisted(SwingMath.Swing(spec.Style, 1f, weapon.Arc, mirrored), spec.Style);
                     return WeaponPose.Lerp(end, idle, SwingMath.Smooth((Time.time - phaseStart) / Mathf.Max(0.01f, spec.Recovery)));
                 }
                 default:

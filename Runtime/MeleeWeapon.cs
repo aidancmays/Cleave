@@ -88,6 +88,8 @@ namespace Cleave
         [SerializeField] Vector3 holdEuler = new Vector3(35f, 0f, -12f);
         [Tooltip("Degrees it is then turned about its own length while idle. 90 = edge toward you.")]
         [SerializeField] float holdTwist = 90f;
+        [Tooltip("Degrees a thrust turns the weapon about its length from how it is held idle (negative turns the other way).")]
+        [SerializeField] float thrustTwist = -60f;
         [Tooltip("Walk speed multiplier while winding up a charge.")]
         [Range(0.1f, 1f)] [SerializeField] float chargingSpeed = 0.6f;
 
@@ -129,6 +131,8 @@ namespace Cleave
         public Vector3 HoldOffset => holdOffset;
         public Quaternion HoldRotation => Quaternion.Euler(holdEuler) * Quaternion.AngleAxis(holdTwist, Vector3.up);
         public float ChargingSpeed => chargingSpeed;
+        public float HoldTwist => holdTwist;
+        public float ThrustTwist => thrustTwist;
 
         /// <summary>The numbers for a swing let go after holding for <paramref name="held"/> seconds.</summary>
         public SwingSpec SpecFor(float held)
